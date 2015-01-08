@@ -26,11 +26,27 @@ cat <<EOF > $ADIR/hosts
 $ID ansible_connection=local
 EOF
 
-mkdir -p $ADIR/hosts_vars
+mkdir -p $ADIR/host_vars
 
-cat <<EOF > $ADIR/hosts_vars/$ID
+cat << EOF > $ADIR/host_vars/$ID
 ---
-tftpd_enable: true
+machine_id: $ID
 EOF
+
+for S in tftpd dhcpd;  do
+    ENABLE="false"
+    V=`etcdctl get /lochness/hypervisors/$ID/config/$S 2>&1`
+    if [ $? -eq 0 ]; then
+        V=${V,,}
+        case $V in
+            true|1|yes)
+                ENABLE="true"
+                ;;
+            *)
+                ;;
+        esac
+    fi
+    printf "%s_enable: %s\n"  $S $ENABLE >> $ADIR/host_vars/$ID
+done
 
 ansible-playbook --inventory $ADIR/hosts --connection=local ./lochness.yml
