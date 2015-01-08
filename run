@@ -1,0 +1,36 @@
+#!/bin/bash
+
+ID=$1
+
+if [ -z "$ID" ]; then
+    if [ -f /etc/machine_id ]; then
+        ID=`cat /etc/machine_id`
+    fi
+fi
+
+if [ -z "$ID" ]; then
+    if [ -r /sys/class/dmi/id/product_uuid ]; then
+        ID=`cat /sys/class/dmi/id/product_uuid`
+    fi
+fi
+
+if [ -z "$ID" ]; then
+    echo "need an ID!!!"
+    exit -5
+fi
+
+ADIR=/tmp/ansible
+mkdir -p $ADIR
+
+cat <<EOF > $ADIR/hosts
+$ID ansible_connection=local
+EOF
+
+mkdir -p $ADIR/hosts_vars
+
+cat <<EOF > $ADIR/hosts_vars/$ID
+---
+tftpd_enable: true
+EOF
+
+ansible-playbook --inventory $ADIR/hosts --connection=local ./lochness.yml
