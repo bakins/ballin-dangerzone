@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# this should probably be done in go/python/something
+# this is just a POC
+
 ID=$1
 
 if [ -z "$ID" ]; then
